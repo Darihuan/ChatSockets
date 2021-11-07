@@ -43,21 +43,29 @@ class ChatFragment : Fragment() {
         var boton = binding.btnPlay;
         var texto = binding.miTexto;
         var inputTexto = binding.inputText;
+        var usuario = binding.usuarioinput;
 
-
-        var socket:Socket = Socket("192.168.0.18",8080);
-        var datainput: DataInputStream = DataInputStream(socket.getInputStream());
-        var dataOutput:DataOutputStream = DataOutputStream( socket.getOutputStream());
 
 
         boton.setOnClickListener(){
-            actualizarChat()
-            if(!inputTexto.text.equals("")) {
-                dataOutput.writeUTF(inputTexto.text.toString());
-                chat.add(inputTexto.text.toString())
-                inputTexto.text.clear()
-                texto.text = chatTostring()
-            }
+            var socket:Socket = Socket("192.168.0.18",8080);
+            var datainput: DataInputStream = DataInputStream(socket.getInputStream());
+            var dataOutput:DataOutputStream = DataOutputStream( socket.getOutputStream());
+
+            var textchat= datainput.readUTF().split(";");
+
+            var chatview = "";
+            textchat.forEach{linea->chatview+=linea+"\n"}
+            binding.miTexto.text = chatview;
+
+
+            dataOutput.writeUTF(usuario.text.toString()+":"+inputTexto.text.toString());
+
+
+            textchat= datainput.readUTF().split(";").map { linea->linea.replace("$","\n") };
+            chatview = "";
+            textchat.forEach{linea->chatview+=linea+"\n"}
+            binding.miTexto.text = chatview;
 
 
         }
@@ -65,32 +73,7 @@ class ChatFragment : Fragment() {
 
 
 
-    fun chatTostring():String {
-        var chatstr ="";
 
-        for (palabra in chat)
-            chatstr += palabra+"\n"
-
-        return chatstr
-    }
-
-    fun actualizarChat() {
-        var socket:Socket = Socket("192.168.0.18",8080);
-        var datainput: DataInputStream = DataInputStream(socket.getInputStream());
-        var dataOutput:DataOutputStream = DataOutputStream( socket.getOutputStream());
-        dataOutput.writeUTF("actualizar")
-        try {
-            var linea = datainput.readUTF();
-            while(!linea.equals("")) {
-                chat.add(linea)
-                linea = datainput.readUTF()
-            }
-            socket.close()
-
-        }catch (e: EOFException) {
-            print("Se termino la actualizacion")
-        }
-    }
 
     override fun onDestroyView() {
         super.onDestroyView()
